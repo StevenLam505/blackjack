@@ -2,7 +2,7 @@
 # AUTHOR:   Steven Lam                          #
 # DATE:     5/12/20                             #
 # FILE:     blackjack.py                        #
-# DESC:     Blackjack using python plugin       #
+# DESC:     Blackjack using python plugins      #
 #################################################
 
 #import pygame
@@ -11,8 +11,43 @@ import random
 allCards = range(1,11)
 faceCards = ["Jack", "Queen", "King"]
 deck = []
-hand = []
-dealerHand = []
+maxCards = 51
+
+class player(object):
+    def __init__(self, hand, points):
+        self.hand = hand
+        self.points = points
+
+    def calculatePoints(self, cards):
+        self.points = 0
+        for i in range(len(cards)):
+            if (cards[i][0][0] == "J" or cards[i][0][0] == "Q" or cards[i][0][0] == "K"):
+                self.points += 10
+            else:
+                self.points += int(cards[i][0:2])
+
+    def drawCard(self):
+        global maxCards
+        randomCard = random.randint(0, maxCards)        # Generates a random number between
+        self.hand.append(deck[randomCard])              # 0 - 51 to put that card from
+        deck.pop(randomCard)                            # deck into a player's hand then
+        maxCards -= 1                                   # removes the card from the deck
+
+    def houseHit(self):
+        if self.points < 17:                            # If the dealer has < 17, he hits again
+            self.drawCard()                             # otherwise he stands
+
+    def playerHit(self):
+        hitAgain = input("Would you like to hit? (Y/N)")        # Asks the player to hit if they want to
+        while hitAgain == "Y" and self.points <= 21:            # If the player goes over 21 points
+            self.drawCard()                                     # they bust
+            print("Player hand:", self.hand)
+            self.calculatePoints(self.hand)
+            if self.points > 21:
+                print("You busted, house wins!")
+                return
+            hitAgain = input("Would you like to hit? (Y/N)")
+
 
 def createDeck():
     # Create base 0-10 cards for the 4 suits
@@ -30,74 +65,37 @@ def createDeck():
         deck.append(j + " of Clubs")
 
 
-def calculatePoints(cards):
-    points = 0
-    if (cards[0] == "J" or cards[0] == "Q" or cards[0] == "K"):
-        points += 10
-    else:
-        points += int(cards[0:2])
-    return points
-
-
-def dealer():
-    global maxCards
-    maxCards = 51
-    dealerPoints = 0
-    i = 1  # Used to iterate the loop
-    cardNum = 0  # Represents the card that is in the hand
-    while i <= 2:
-        randomCard = random.randint(0, maxCards)
-        dealerHand.append(deck[randomCard])
-        deck.pop(randomCard)
-        maxCards -= 1
-        dealerPoints += calculatePoints(dealerHand[cardNum])
-        cardNum += 1
-        i += 1
-        if i == 3:
-            print("Dealer has", dealerHand, "in their hand equaling", dealerPoints, "points")
-            if dealerPoints < 17:
-                i -= 1
-        if dealerPoints > 21:
-            print("Dealer has", dealerHand, "in their hand equaling", dealerPoints, "points")
-            print("Dealer busted, oops.")
-            break
-    return dealerPoints
-
-
-def dealCards():
-    global maxCards
-    points = 0
-    i = 1           # Used to iterate the loop
-    cardNum = 0     # Represents the card that is in the hand
-    while i <= 2:
-        randomCard = random.randint(0,maxCards)
-        hand.append(deck[randomCard])
-        deck.pop(randomCard)
-        maxCards -= 1
-        points += calculatePoints(hand[cardNum])
-        cardNum += 1
-        i += 1
-        if points > 21:
-            print("You have", hand, "in your hand equaling", points, "points")
-            print("You busted, oops.")
-            break
-        if i == 3:
-            print("You have", hand, "in your hand equaling", points, "points")
-            hitAgain = input("Would you like to hit? (Y/N)")
-            if hitAgain == "Y":
-                i -= 1
-    return points
-
 def findWinner(dPoints, pPoints):
-    if dPoints > 21 or dPoints < pPoints:
+    if (dPoints > 21 or dPoints < pPoints) and pPoints <= 21:
         print("Player wins!")
-    elif pPoints > 21 or dPoints > pPoints:
-        print("Dealer wins!")
+    elif (pPoints > 21 or dPoints > pPoints) and dPoints <=21:
+        print("House wins!")
     else:
         print("Tie!")
 
 
-createDeck()
-dealerPoints = dealer()
-points = dealCards()
-findWinner(dealerPoints, points)
+def game():
+    createDeck()
+
+    dealer = player([], 0)                                          # Starts the game and gives both the
+    user = player([], 0)                                            # player and house an empty hand and 0
+    user.drawCard()                                                 # points. They then each draw 2 cards.
+    dealer.drawCard()                                               # Only one of the house's cards is displayed
+    user.drawCard()                                                 # while the other is hidden.
+    dealer.drawCard()
+    print("House hand:", dealer.hand[1], "and Unknown Card")
+    print("Player hand:", user.hand)
+    user.playerHit()                                                # The player is then asked to hit
+    if user.points <= 21:                                           # If the player has over 21 points, they
+        dealer.houseHit()                                           # bust and the house does not hit. If
+    dealer.calculatePoints(dealer.hand)                             # the player has <= 21 points and house
+    user.calculatePoints(user.hand)                                 # has less than 17 points, the house hits
+    print("\n")
+    print("House hand:", dealer.hand)
+    print("House points:", dealer.points)
+    print("Player hand:", user.hand)
+    print("Player points:", user.points)
+
+    findWinner(dealer.points, user.points)
+
+game()

@@ -21,10 +21,17 @@ class player(object):
     def calculatePoints(self, cards):
         self.points = 0
         for i in range(len(cards)):
-            if (cards[i][0][0] == "J" or cards[i][0][0] == "Q" or cards[i][0][0] == "K"):
+            if (cards[i][0] == "J" or cards[i][0] == "Q" or cards[i][0] == "K"):        # Adds 10 points for face cards
                 self.points += 10
-            else:
-                self.points += int(cards[i][0:2])
+            elif (cards[i][0:2] == "1 "):                                               # Adds 11 points for ace
+                self.points += 11
+            else:                                                                       # Adds in the number value                          
+                self.points += int(cards[i][0:2])                                       # converted to int from str
+
+        for j in range(len(cards)):                                                     # If an ace was in the hand and 
+            if (self.points > 21 and cards[j][0:2] == "1 "):                            # causes it to go over 21 because the
+                self.points -= 10                                                       # ace was an 11, it changes it to a 1
+
 
     def drawCard(self):
         global maxCards
